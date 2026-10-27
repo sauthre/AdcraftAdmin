@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AdCraft Automations — Admin</title>
+<meta name="description" content="AdCraft Automations team admin panel: leads, stats, status workflow, notes, follow-ups, and lead details. Team login only.">
+<style>
+  :root{--navy:#12263F;--blue:#0B74D6;--bg:#F4F7FB;--card:#fff;--ink:#16283f;--muted:#5a6b7f;--line:#dbe4ee;--green:#1e7d4d;--red:#b3261e}
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:1020px;margin:0 auto;padding:20px}
+  header{background:var(--navy);color:#fff} header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .brand{font-weight:800;font-size:20px} .brand span{color:#7ec2f5} .tag{background:var(--blue);color:#fff;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700}
+  h1{font-size:26px;margin:8px 0 4px} h2{font-size:20px;margin:0 0 8px} p.lead{color:var(--muted);margin:0 0 16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:16px 0}
+  label{display:block;font-weight:700;margin:12px 0 6px} input,select,textarea{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:10px;font-size:16px;background:#fff;color:var(--ink)}
+  button{background:var(--blue);color:#fff;border:0;border-radius:10px;padding:13px 20px;font-size:16px;font-weight:700;cursor:pointer;min-height:48px}
+  button.secondary{background:#fff;color:var(--navy);border:1px solid var(--line)} button:disabled{opacity:.6;cursor:wait}
+  .row{display:flex;gap:12px;flex-wrap:wrap} .row>*{flex:1;min-width:200px}
+  .err{background:#fdecea;color:var(--red);border:1px solid #f5c2bd;border-radius:10px;padding:12px 14px;margin:12px 0;display:none}
+  .ok{background:#e6f4ec;color:var(--green);border:1px solid #bfe3cd;border-radius:10px;padding:12px 14px;margin:12px 0;display:none}
+  .muted{color:var(--muted);font-size:14px} .link{background:none;border:0;color:var(--blue);font-weight:700;cursor:pointer;padding:0;min-height:auto;text-decoration:underline}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px} .stat b{font-size:28px;display:block} .stat span{color:var(--muted);font-size:14px}
+  .lead-item{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0;cursor:pointer;background:#fff}
+  .lead-item:hover{border-color:var(--blue)} .lead-item strong{font-size:17px}
+  .badge{display:inline-block;background:#eaf2fc;color:var(--navy);border-radius:999px;padding:3px 10px;font-size:13px;font-weight:700;text-transform:capitalize}
+  .badge.won{background:#e6f4ec;color:var(--green)} .badge.lost{background:#eee;color:#666}
+  .meta{color:var(--muted);font-size:14px;margin-top:4px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .pager{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+  .modal{position:fixed;inset:0;background:rgba(10,25,45,.55);display:none;overflow-y:auto;padding:20px;z-index:50}
+  .modal.open{display:block} .modal-card{background:#fff;border-radius:14px;padding:20px;max-width:680px;margin:20px auto}
+  .modal-card dt{font-weight:700;margin-top:10px} .modal-card dd{margin:4px 0 0;white-space:pre-wrap}
+  .note{border-top:1px solid var(--line);padding:10px 0} .note:first-child{border-top:0}
+  @media(max-width:700px){.wrap{padding:16px} h1{font-size:22px} .stats{grid-template-columns:repeat(2,1fr)} .modal{padding:10px} .modal-card{margin:10px auto}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><div class="brand">AdCraft <span>Automations</span></div><div class="tag">Admin</div></div></header>
+<main class="wrap">
+
+<section id="loginView" class="card">
+  <h1>Team login</h1>
+  <p class="lead">Sign in with your team admin account to view leads. No public sign-up here — team accounts are created in the Supabase dashboard only.</p>
+  <div id="loginErr" class="err" role="alert"></div>
+  <div id="loginOk" class="ok" role="status"></div>
+  <form id="loginForm">
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="username" required>
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+    <div style="margin-top:16px"><button id="loginBtn" type="submit">Sign in →</button></div>
+  </form>
+  <p style="margin-top:14px"><button id="forgotToggle" class="link" type="button">Forgot password?</button></p>
+  <div id="forgotBox" style="display:none">
+    <label for="forgotEmail">Email for reset link</label>
+    <input id="forgotEmail" type="email" placeholder="Your team admin email">
+    <div style="margin-top:12px"><button id="forgotBtn" type="button">Send reset link →</button></div>
+    <div id="forgotMsg" class="ok" role="status"></div>
+    <div id="forgotErr" class="err" role="alert"></div>
+  </div>
+  <p class="muted">Your session is kept only in this browser tab and clears when the tab closes.</p>
+</section>
+
+<section id="recoveryView" class="card" style="display:none">
+  <h1>Set a new password</h1>
+  <p class="lead">You arrived here from a password reset link. Choose a new password for your team admin account.</p>
+  <div id="recoveryErr" class="err" role="alert"></div>
+  <form id="recoveryForm">
+    <label for="newPassword">New password</label>
+    <input id="newPassword" type="password" autocomplete="new-password" required>
+    <label for="newPassword2">Confirm new password</label>
+    <input id="newPassword2" type="password" autocomplete="new-password" required>
+    <div style="margin-top:16px"><button id="recoveryBtn" type="submit">Save new password →</button></div>
+  </form>
+</section>
+
+<section id="appView" style="display:none">
+  <div class="topbar"><h1>Leads</h1><button id="logoutBtn" class="secondary" type="button">Sign out</button></div>
+  <p class="lead" id="signedInAs"></p>
+  <div id="appErr" class="err" role="alert"></div>
+  <div id="appOk" class="ok" role="status"></div>
+
+  <div class="stats" aria-label="Lead stats">
+    <div class="stat"><b id="statTotal">–</b><span>Total leads</span></div>
+    <div class="stat"><b id="statToday">–</b><span>New today</span></div>
+    <div class="stat"><b id="statNew">–</b><span>Status: New</span></div>
+    <div class="stat"><b id="statContacted">–</b><span>Status: Contacted</span></div>
+    <div class="stat"><b id="statWon">–</b><span>Status: Won</span></div>
+    <div class="stat"><b id="statFollow">–</b><span>Follow-ups due</span></div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div><label for="statusFilter">Status</label>
+        <select id="statusFilter">
+          <option value="all">All statuses</option><option value="new">New</option><option value="contacted">Contacted</option><option value="qualified">Qualified</option><option value="proposal">Proposal</option><option value="won">Won</option><option value="lost">Lost</option>
+        </select></div>
+      <div><label for="search">Search</label><input id="search" type="search" placeholder="Name, company, email, phone or message"></div>
+      <div><label for="dateFrom">From date</label><input id="dateFrom" type="date"></div>
+      <div><label for="dateTo">To date</label><input id="dateTo" type="date"></div>
+      <div><label for="teamFilter">Team size</label><select id="teamFilter"><option value="all">All sizes</option></select></div>
+      <div><label for="assignedFilter">Assigned to</label>
+        <select id="assignedFilter"><option value="all">Anyone</option><option value="unassigned">Unassigned</option><option value="hellotheadcraft@gmail.com">hellotheadcraft@gmail.com</option><option value="Flarefixdaily@gmail.com">Flarefixdaily@gmail.com</option></select></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button id="refreshBtn" class="secondary" type="button">Refresh leads</button>
+      <button id="exportBtn" class="secondary" type="button">Export filtered leads (CSV)</button>
+    </div>
+    <p class="muted" id="lastUpdated" style="margin-top:10px">Auto-refresh: every 60 seconds while signed in and this tab is visible, plus manual Refresh.</p>
+    <div id="leadsList" style="margin-top:8px"></div>
+    <p id="leadsEmpty" class="muted" style="display:none">No leads match this filter yet. When a visitor submits the Contact Us form, their enquiry appears here.</p>
+    <div class="pager">
+      <button id="prevBtn" class="secondary" type="button">← Previous</button>
+      <span id="pageInfo" class="muted"></span>
+      <button id="nextBtn" class="secondary" type="button">Next →</button>
+    </div>
+  </div>
+</section>
+</main>
+
+<div id="detailModal" class="modal" role="dialog" aria-modal="true" aria-label="Lead detail">
+  <div class="modal-card">
+    <div class="topbar"><h2 id="detailTitle" style="margin:0">Lead detail</h2><button id="detailClose" class="secondary" type="button">Close ×</button></div>
+    <dl>
+      <dt>Name</dt><dd id="dName"></dd>
+      <dt>Company</dt><dd id="dCompany"></dd>
+      <dt>Email</dt><dd id="dEmail"></dd>
+      <dt>Phone</dt><dd id="dPhone"></dd>
+      <dt>Team size</dt><dd id="dTeam"></dd>
+      <dt>Submitted</dt><dd id="dDate"></dd>
+      <dt>Last updated</dt><dd id="dUpdated"></dd>
+      <dt>Source</dt><dd id="dSource"></dd>
+      <dt>Message</dt><dd id="dMessage"></dd>
+    </dl>
+    <label for="dStatus">Status</label>
+    <select id="dStatus">
+      <option value="new">New</option><option value="contacted">Contacted</option><option value="qualified">Qualified</option><option value="proposal">Proposal</option><option value="won">Won</option><option value="lost">Lost</option>
+    </select>
+    <label for="dAssigned">Assigned to</label>
+    <select id="dAssigned"><option value="">Unassigned</option><option value="hellotheadcraft@gmail.com">hellotheadcraft@gmail.com</option><option value="Flarefixdaily@gmail.com">Flarefixdaily@gmail.com</option></select>
+    <label for="dFollow">Follow-up date</label>
+    <input id="dFollow" type="date">
+    <div style="margin-top:14px"><button id="saveDetailsBtn" type="button">Save details →</button></div>
+    <h3 style="margin-top:24px">Notes</h3>
+    <div id="notesList"></div>
+    <label for="newNote">Add a note</label>
+    <textarea id="newNote" rows="3" placeholder="Call summary, next step, anything the team should know"></textarea>
+    <div style="margin-top:12px"><button id="addNoteBtn" type="button">Add note →</button></div>
+    <h3 style="margin-top:24px">Status history</h3>
+    <div id="historyList"></div>
+    <p class="muted">Changing a status here does not send an email and does not delete the lead. Leads are deleted only from the Supabase dashboard.</p>
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL = "https://tkcbwqkjtisogjmwwmxm.supabase.co";
+var PUBLISHABLE_KEY = "sb_publishable_vZTpaQjplgb51U1KoYkiuA_pOqt5VZg";
+var ADMIN_URL = "https://admin.adcraftautomations.com/";
+var leads = [], filtered = [], page = 1, PAGE_SIZE = 20, currentId = null, currentLead = null, refreshTimer = null;
+
+function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function token(){return sessionStorage.getItem("adcraft_admin_token")||"";}
+function signedEmail(){return sessionStorage.getItem("adcraft_admin_email")||"";}
+function show(el,msg){el.textContent=msg;el.style.display="block";}
+function hide(el){el.style.display="none";}
+function istDate(iso){try{return new Date(iso).toLocaleDateString("en-CA",{timeZone:"Asia/Kolkata"});}catch(e){return "";}}
+function fmtDate(iso){try{return new Date(iso).toLocaleString("en-IN",{timeZone:"Asia/Kolkata",day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"});}catch(e){return iso||"—";}}
+function authHeaders(extra){var h={"apikey":PUBLISHABLE_KEY,"Authorization":"Bearer "+token()};for(var k in extra) h[k]=extra[k];return h;}
+
+function showLogin(msg){document.getElementById("loginView").style.display="block";document.getElementById("appView").style.display="none";document.getElementById("recoveryView").style.display="none";if(msg) show(document.getElementById("loginErr"),msg);}
+function showApp(){hide(document.getElementById("loginErr"));document.getElementById("loginView").style.display="none";document.getElementById("recoveryView").style.display="none";document.getElementById("appView").style.display="block";document.getElementById("signedInAs").textContent="Signed in as "+signedEmail()+" · Nothing is published to the live site from this page.";startAutoRefresh();}
+
+function startAutoRefresh(){if(refreshTimer) clearInterval(refreshTimer);refreshTimer=setInterval(function(){if(token() && document.visibilityState==="visible") loadLeads(true);},60000);}
+
+document.getElementById("loginForm").addEventListener("submit",async function(e){
+  e.preventDefault();hide(document.getElementById("loginErr"));
+  var btn=document.getElementById("loginBtn");btn.disabled=true;btn.textContent="Signing in…";
+  var email=document.getElementById("email").value.trim(), pw=document.getElementById("password").value;
+  try{
+    var res=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=password",{method:"POST",headers:{"apikey":PUBLISHABLE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email:email,password:pw})});
+    var data=await res.json();
+    if(!res.ok) throw new Error("Invalid email or password. Please try again.");
+    sessionStorage.setItem("adcraft_admin_token",data.access_token);
+    sessionStorage.setItem("adcraft_admin_email",email);
+    document.getElementById("password").value="";showApp();await loadLeads(false);
+  }catch(err){show(document.getElementById("loginErr"),err.message||"Sign-in failed. Please try again.");}
+  btn.disabled=false;btn.textContent="Sign in →";
+});
+document.getElementById("logoutBtn").addEventListener("click",function(){
+  sessionStorage.removeItem("adcraft_admin_token");sessionStorage.removeItem("adcraft_admin_email");
+  if(refreshTimer) clearInterval(refreshTimer);closeModal();showLogin("");
+});
+document.getElementById("forgotToggle").addEventListener("click",function(){var b=document.getElementById("forgotBox");b.style.display=b.style.display==="none"?"block":"none";});
+document.getElementById("forgotBtn").addEventListener("click",async function(){
+  hide(document.getElementById("forgotErr"));hide(document.getElementById("forgotMsg"));
+  var email=document.getElementById("forgotEmail").value.trim();if(!email){show(document.getElementById("forgotErr"),"Please enter your team admin email first.");return;}
+  var btn=this;btn.disabled=true;btn.textContent="Sending…";
+  try{
+    var res=await fetch(SUPABASE_URL+"/auth/v1/recover",{method:"POST",headers:{"apikey":PUBLISHABLE_KEY,"Content-Type":"application/json"},body:JSON.stringify({email:email,redirect_to:ADMIN_URL})});
+    if(!res.ok) throw new Error("Could not send the reset link. Please try again.");
+    show(document.getElementById("forgotMsg"),"If this email belongs to a team account, a password reset link has been sent. Check the inbox (and spam).");
+  }catch(err){show(document.getElementById("forgotErr"),err.message);}
+  btn.disabled=false;btn.textContent="Send reset link →";
+});
+document.getElementById("recoveryForm").addEventListener("submit",async function(e){
+  e.preventDefault();hide(document.getElementById("recoveryErr"));
+  var p1=document.getElementById("newPassword").value, p2=document.getElementById("newPassword2").value;
+  if(p1.length<6){show(document.getElementById("recoveryErr"),"Password must be at least 6 characters.");return;}
+  if(p1!==p2){show(document.getElementById("recoveryErr"),"Passwords do not match.");return;}
+  var btn=document.getElementById("recoveryBtn");btn.disabled=true;btn.textContent="Saving…";
+  try{
+    var res=await fetch(SUPABASE_URL+"/auth/v1/user",{method:"PUT",headers:{"apikey":PUBLISHABLE_KEY,"Authorization":"Bearer "+(sessionStorage.getItem("adcraft_recovery_token")||""),"Content-Type":"application/json"},body:JSON.stringify({password:p1})});
+    if(!res.ok) throw new Error("Could not save the new password. The reset link may have expired — please request a new one.");
+    history.replaceState(null,"",location.pathname);sessionStorage.removeItem("adcraft_recovery_token");
+    document.getElementById("loginView").style.display="block";document.getElementById("recoveryView").style.display="none";
+    show(document.getElementById("loginOk"),"New password saved. Please sign in with it.");
+  }catch(err){show(document.getElementById("recoveryErr"),err.message);}
+  btn.disabled=false;btn.textContent="Save new password →";
+});
+(function handleRecovery(){
+  var m=location.hash.match(/access_token=([^&]+).*type=recovery/)||location.hash.match(/type=recovery.*access_token=([^&]+)/);
+  if(m){sessionStorage.setItem("adcraft_recovery_token",decodeURIComponent(m[1]));document.getElementById("loginView").style.display="none";document.getElementById("appView").style.display="none";document.getElementById("recoveryView").style.display="block";}
+})();
+
+document.getElementById("refreshBtn").addEventListener("click",function(){loadLeads(false);});
+["statusFilter","search","dateFrom","dateTo","teamFilter","assignedFilter"].forEach(function(id){document.getElementById(id).addEventListener("input",function(){page=1;renderLeads();});document.getElementById(id).addEventListener("change",function(){page=1;renderLeads();});});
+document.getElementById("prevBtn").addEventListener("click",function(){if(page>1){page--;renderLeads();}});
+document.getElementById("nextBtn").addEventListener("click",function(){var max=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));if(page<max){page++;renderLeads();}});
+document.getElementById("exportBtn").addEventListener("click",exportCSV);
+document.getElementById("detailClose").addEventListener("click",closeModal);
+document.getElementById("detailModal").addEventListener("click",function(e){if(e.target===this) closeModal();});
+document.addEventListener("keydown",function(e){if(e.key==="Escape") closeModal();});
+function closeModal(){document.getElementById("detailModal").classList.remove("open");currentId=null;currentLead=null;}
+
+async function loadLeads(silent){
+  hide(document.getElementById("appErr"));hide(document.getElementById("appOk"));
+  var list=document.getElementById("leadsList");if(!silent) list.innerHTML="<p class='muted'>Loading leads…</p>";
+  try{
+    var res=await fetch(SUPABASE_URL+"/rest/v1/leads?select=id,created_at,updated_at,name,company,email,phone,team_size,message,source,status,assigned_to,follow_up_date&order=created_at.desc",{headers:authHeaders()});
+    if(res.status===401){sessionStorage.removeItem("adcraft_admin_token");if(refreshTimer) clearInterval(refreshTimer);showLogin("Your session expired. Please sign in again.");return;}
+    if(!res.ok) throw new Error("Could not load leads. Please refresh and try again.");
+    leads=await res.json();buildTeamOptions();renderStats();page=1;renderLeads();
+    document.getElementById("lastUpdated").textContent="Last updated: "+fmtDate(new Date().toISOString())+" · Auto-refresh: every 60 seconds while signed in and this tab is visible, plus manual Refresh.";
+  }catch(err){if(!silent) list.innerHTML="";show(document.getElementById("appErr"),err.message);}
+}
+function buildTeamOptions(){
+  var sel=document.getElementById("teamFilter");var cur=sel.value;var vals=[];leads.forEach(function(l){if(l.team_size&&vals.indexOf(l.team_size)===-1) vals.push(l.team_size);});
+  sel.innerHTML="<option value='all'>All sizes</option>"+vals.map(function(v){return "<option value='"+esc(v)+"'>"+esc(v)+"</option>";}).join("");
+  if(vals.indexOf(cur)!==-1) sel.value=cur;
+}
+function renderStats(){
+  var today=istDate(new Date().toISOString());
+  document.getElementById("statTotal").textContent=leads.length;
+  document.getElementById("statToday").textContent=leads.filter(function(l){return istDate(l.created_at)===today;}).length;
+  document.getElementById("statNew").textContent=leads.filter(function(l){return l.status==="new";}).length;
+  document.getElementById("statContacted").textContent=leads.filter(function(l){return l.status==="contacted";}).length;
+  document.getElementById("statWon").textContent=leads.filter(function(l){return l.status==="won";}).length;
+  document.getElementById("statFollow").textContent=leads.filter(function(l){return l.follow_up_date&&l.follow_up_date<=today&&l.status!=="won"&&l.status!=="lost";}).length;
+}
+function applyFilters(){
+  var f=document.getElementById("statusFilter").value, q=document.getElementById("search").value.trim().toLowerCase();
+  var df=document.getElementById("dateFrom").value, dt=document.getElementById("dateTo").value, tf=document.getElementById("teamFilter").value, af=document.getElementById("assignedFilter").value;
+  return leads.filter(function(l){
+    if(f!=="all"&&l.status!==f) return false;
+    if(tf!=="all"&&l.team_size!==tf) return false;
+    if(af==="unassigned"&&l.assigned_to) return false;
+    if(af!=="all"&&af!=="unassigned"&&l.assigned_to!==af) return false;
+    var d=istDate(l.created_at);if(df&&d<df) return false;if(dt&&d>dt) return false;
+    if(q){var hay=((l.name||"")+" "+(l.company||"")+" "+(l.email||"")+" "+(l.phone||"")+" "+(l.message||"")).toLowerCase();if(hay.indexOf(q)===-1) return false;}
+    return true;
+  });
+}
+function renderLeads(){
+  filtered=applyFilters();
+  var max=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));if(page>max) page=max;
+  var start=(page-1)*PAGE_SIZE, slice=filtered.slice(start,start+PAGE_SIZE);
+  var list=document.getElementById("leadsList");
+  document.getElementById("leadsEmpty").style.display=filtered.length?"none":"block";
+  list.innerHTML=slice.map(function(l){
+    var follow=l.follow_up_date?(" · Follow-up: "+esc(l.follow_up_date)):"";
+    var assign=l.assigned_to?(" · Assigned: "+esc(l.assigned_to)):"";
+    return "<article class='lead-item' data-id='"+esc(l.id)+"'><strong>"+esc(l.name)+"</strong> <span class='badge "+esc(l.status)+"'>"+esc(l.status)+"</span><div class='meta'>"+esc(l.company||"—")+" · "+esc(l.email)+" · "+fmtDate(l.created_at)+follow+assign+"</div><div class='meta'>"+esc((l.message||"").slice(0,120))+"</div></article>";
+  }).join("");
+  list.querySelectorAll(".lead-item").forEach(function(el){el.addEventListener("click",function(){openDetail(el.getAttribute("data-id"));});});
+  document.getElementById("pageInfo").textContent=filtered.length?("Showing "+(start+1)+"–"+Math.min(start+PAGE_SIZE,filtered.length)+" of "+filtered.length+" · Page "+page+" of "+max):"No leads";
+  document.getElementById("prevBtn").disabled=page<=1;document.getElementById("nextBtn").disabled=page>=max;
+}
+function exportCSV(){
+  var rows=applyFilters();if(!rows.length){show(document.getElementById("appErr"),"No leads to export for the current filter.");return;}
+  function q(v){return '"'+String(v==null?"":v).replace(/"/g,'""')+'"';}
+  var csv=["Name,Company,Email,Phone,Team size,Status,Assigned to,Follow-up date,Submitted,Message"].join(",")+"\n"+rows.map(function(l){return [l.name,l.company,l.email,l.phone,l.team_size,l.status,l.assigned_to,l.follow_up_date,l.created_at,l.message].map(q).join(",");}).join("\n");
+  var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download="adcraft-leads-"+istDate(new Date().toISOString())+".csv";a.click();URL.revokeObjectURL(a.href);
+}
+async function openDetail(id){
+  var l=leads.find(function(x){return x.id===id;});if(!l) return;currentId=id;currentLead=l;
+  document.getElementById("detailTitle").textContent="Lead: "+l.name;
+  document.getElementById("dName").textContent=l.name||"—";
+  document.getElementById("dCompany").textContent=l.company||"—";
+  document.getElementById("dEmail").textContent=l.email||"—";
+  document.getElementById("dPhone").textContent=l.phone||"—";
+  document.getElementById("dTeam").textContent=l.team_size||"—";
+  document.getElementById("dDate").textContent=fmtDate(l.created_at);
+  document.getElementById("dUpdated").textContent=fmtDate(l.updated_at||l.created_at);
+  document.getElementById("dSource").textContent=l.source||"—";
+  document.getElementById("dMessage").textContent=l.message||"—";
+  document.getElementById("dStatus").value=l.status||"new";
+  document.getElementById("dAssigned").value=l.assigned_to||"";
+  document.getElementById("dFollow").value=l.follow_up_date||"";
+  document.getElementById("newNote").value="";
+  document.getElementById("detailModal").classList.add("open");
+  await Promise.all([loadNotes(),loadHistory()]);
+}
+async function loadNotes(){
+  var box=document.getElementById("notesList");box.innerHTML="<p class='muted'>Loading notes…</p>";
+  try{
+    var res=await fetch(SUPABASE_URL+"/rest/v1/lead_notes?lead_id=eq."+encodeURIComponent(currentId)+"&select=author_email,note,created_at&order=created_at.asc",{headers:authHeaders()});
+    if(!res.ok) throw new Error("Could not load notes.");
+    var notes=await res.json();
+    box.innerHTML=notes.length?notes.map(function(n){return "<div class='note'><strong>"+esc(n.author_email||"Team")+"</strong> <span class='muted'>"+fmtDate(n.created_at)+"</span><div>"+esc(n.note)+"</div></div>";}).join(""):"<p class='muted'>No notes yet.</p>";
+  }catch(err){box.innerHTML="<p class='muted'>Could not load notes.</p>";}
+}
+async function loadHistory(){
+  var box=document.getElementById("historyList");box.innerHTML="<p class='muted'>Loading history…</p>";
+  try{
+    var res=await fetch(SUPABASE_URL+"/rest/v1/lead_status_history?lead_id=eq."+encodeURIComponent(currentId)+"&select=from_status,to_status,changed_by,changed_at&order=changed_at.desc",{headers:authHeaders()});
+    if(!res.ok) throw new Error("Could not load history.");
+    var h=await res.json();
+    box.innerHTML=h.length?h.map(function(x){return "<div class='note'><span class='badge'>"+esc(x.from_status||"—")+" → "+esc(x.to_status)+"</span> <span class='muted'>by "+esc(x.changed_by||"team")+" · "+fmtDate(x.changed_at)+"</span></div>";}).join(""):"<p class='muted'>No status changes recorded yet. (History starts from Admin v2 onwards.)</p>";
+  }catch(err){box.innerHTML="<p class='muted'>Could not load history.</p>";}
+}
+document.getElementById("saveDetailsBtn").addEventListener("click",async function(){
+  if(!currentId||!currentLead) return;hide(document.getElementById("appErr"));hide(document.getElementById("appOk"));
+  var btn=this;btn.disabled=true;btn.textContent="Saving…";
+  var oldStatus=currentLead.status, newStatus=document.getElementById("dStatus").value;
+  var patch={status:newStatus,assigned_to:document.getElementById("dAssigned").value||null,follow_up_date:document.getElementById("dFollow").value||null,updated_at:new Date().toISOString()};
+  try{
+    var res=await fetch(SUPABASE_URL+"/rest/v1/leads?id=eq."+encodeURIComponent(currentId),{method:"PATCH",headers:authHeaders({"Content-Type":"application/json","Prefer":"return=representation"}),body:JSON.stringify(patch)});
+    if(res.status===401){sessionStorage.removeItem("adcraft_admin_token");closeModal();showLogin("Your session expired. Please sign in again.");return;}
+    if(!res.ok) throw new Error("Could not save the details. Please try again.");
+    var updated=await res.json();
+    if(oldStatus!==newStatus){
+      var hr=await fetch(SUPABASE_URL+"/rest/v1/lead_status_history",{method:"POST",headers:authHeaders({"Content-Type":"application/json","Prefer":"return=minimal"}),body:JSON.stringify({lead_id:currentId,from_status:oldStatus,to_status:newStatus,changed_by:signedEmail()})});
+      if(!hr.ok) show(document.getElementById("appErr"),"Details saved, but the status history entry could not be recorded.");
+    }
+    var l=leads.find(function(x){return x.id===currentId;});if(l&&updated[0]) Object.assign(l,updated[0]);
+    currentLead=l||currentLead;renderStats();renderLeads();await loadHistory();
+    document.getElementById("dUpdated").textContent=fmtDate(currentLead.updated_at);
+    show(document.getElementById("appOk"),"Details saved.");
+  }catch(err){show(document.getElementById("appErr"),err.message);}
+  btn.disabled=false;btn.textContent="Save details →";
+});
+document.getElementById("addNoteBtn").addEventListener("click",async function(){
+  if(!currentId) return;hide(document.getElementById("appErr"));
+  var text=document.getElementById("newNote").value.trim();if(!text){show(document.getElementById("appErr"),"Please write a note first.");return;}
+  var btn=this;btn.disabled=true;btn.textContent="Adding…";
+  try{
+    var res=await fetch(SUPABASE_URL+"/rest/v1/lead_notes",{method:"POST",headers:authHeaders({"Content-Type":"application/json","Prefer":"return=minimal"}),body:JSON.stringify({lead_id:currentId,author_email:signedEmail(),note:text})});
+    if(!res.ok) throw new Error("Could not add the note. Please try again.");
+    document.getElementById("newNote").value="";await loadNotes();show(document.getElementById("appOk"),"Note added.");
+  }catch(err){show(document.getElementById("appErr"),err.message);}
+  btn.disabled=false;btn.textContent="Add note →";
+});
+</script>
+</body>
+</html>
